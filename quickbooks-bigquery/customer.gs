@@ -1,7 +1,7 @@
 function getCustomers() {
   // BigQuery configuration
   //............................................................................................
-  var tableID = "..."; // Enter BigQuery table name  
+  var tableID = "..."; // Enter BigQuery table name
   var schema = {
     fields: [
       {name: 'primary_email_addr', type: 'STRING', mode: 'NULLABLE', description: ''},
@@ -35,18 +35,18 @@ function getCustomers() {
     ]
   };
   // the write disposition tells BigQuery what to do if this table already exists
-  // WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data. 
+  // WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data.
   // WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
   // WRITE_EMPTY: If the table already exists and contains data, a 'duplicate' error is returned in the job result.
   var writeDisposition = 'WRITE_TRUNCATE';
   //............................................................................................
   var start = 1;
   var values = [];
-  for (var k = 0; k < 100; k++) {  
-    var url = "https://quickbooks.api.intuit.com/v3/company/[companyId](https://quickbooks.intuit.com/learn-support/global/customer-company-settings/find-your-quickbooks-online-company-id/00/381495)/query?query=select * from Customer STARTPOSITION "+ start + "&minorversion=59"
+  for (var k = 0; k < 100; k++) {
+    var url = "https://quickbooks.api.intuit.com/v3/company/[companyId]/query?query=select * from Customer STARTPOSITION "+ start + "&minorversion=59"
     var headers = {
       "headers":{
-      "Accept":"application/json", 
+      "Accept":"application/json",
       "Content-Type":"application/json",
       "Authorization": "Bearer " + getService().getAccessToken()
       }
@@ -54,7 +54,7 @@ function getCustomers() {
     var response = UrlFetchApp.fetch(url, headers);
     var dataSet = JSON.parse(response.getContentText());
     var valuesInner = [];
-    for (var i = 0; i < dataSet.QueryResponse.Customer.length; i++) {   
+    for (var i = 0; i < dataSet.QueryResponse.Customer.length; i++) {
       var record = dataSet.QueryResponse.Customer[i];
       if (record.PrimaryEmailAddr === undefined) {
         var primaryEmailAddr = '';
@@ -68,7 +68,7 @@ function getCustomers() {
       var displayName = record.DisplayName;
       var billWithParent = record.BillWithParent;
       var fullyQualifiedName = record.FullyQualifiedName;
-      var companyName = record.CompanyName
+      var companyName = record.CompanyName;
       var familyName = record.FamilyName;
       var sparse = record.sparse;
       if (record.PrimaryPhone === undefined) {
@@ -106,14 +106,14 @@ function getCustomers() {
       var createTime = Utilities.formatDate(new Date(record.MetaData.CreateTime), "UTC", "yyyy-MM-dd HH:mm:ss");
       var lastUpdatedTime = Utilities.formatDate(new Date(record.MetaData.LastUpdatedTime), "UTC", "yyyy-MM-dd HH:mm:ss");
       valuesInner.push([primaryEmailAddr, syncToken, domain, givenName, displayName, billWithParent, fullyQualifiedName, companyName, familyName, sparse, primaryPhone, active, job, balanceWithJobs, billAddrCity, billAddrLine1, billAddrPostalCode, billAddrLat, billAddrLong, billAddrCountrySubDivisionCode, billAddrId, preferredDeliveryMethod, taxable, printOnCheckName, balance, id, createTime, lastUpdatedTime].map(safeValue).join(','));     
-    }    
-    for (var m = 0; m < valuesInner.length; m++) {    
-         values.push(valuesInner[m]);           
-       }    
-    start = start + 100;    
+    }
+    for (var m = 0; m < valuesInner.length; m++) {
+         values.push(valuesInner[m]);
+       }
+    start = start + 100;
     if (dataSet.QueryResponse.Customer.length < 100) {
       break; // Stop loop if URL has less than 100 records.
-    }    
-  }  
-  sendToBigQuery(projectID, datasetID, tableID, schema, writeDisposition, values);  
+    }
+  }
+  sendToBigQuery(projectID, datasetID, tableID, schema, writeDisposition, values);
 }
