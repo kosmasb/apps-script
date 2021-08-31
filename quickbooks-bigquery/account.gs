@@ -1,7 +1,7 @@
-function getAccounts() {  
+function getAccounts() {
   // BigQuery configuration
   //............................................................................................
-  var tableID = "..."; // Enter BigQuery table name  
+  var tableID = "..."; // Enter BigQuery table name
   var schema = {
     fields: [
       {name: 'account_name', type: 'STRING', mode: 'NULLABLE', description: ''},
@@ -23,16 +23,20 @@ function getAccounts() {
       {name: 'create_time', type: 'DATETIME', mode: 'NULLABLE', description: ''},
       {name: 'last_updated_time', type: 'DATETIME', mode: 'NULLABLE', description: ''}
     ]
-  };  
+  };
+  // the write disposition tells BigQuery what to do if this table already exists
+  // WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data.
+  // WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
+  // WRITE_EMPTY: If the table already exists and contains data, a 'duplicate' error is returned in the job result.
   var writeDisposition = 'WRITE_TRUNCATE';
   //............................................................................................
   var start = 1;
   var values = [];
-  for (var k = 0; k < 10; k++) {  
+  for (var k = 0; k < 10; k++) {
     var url = "https://quickbooks.api.intuit.com/v3/company/[companyId]/query?query=select * from Account STARTPOSITION "+ start + "&minorversion=59"
     var headers = {
       "headers":{
-      "Accept":"application/json", 
+      "Accept":"application/json",
       "Content-Type":"application/json",
       "Authorization": "Bearer " + getService().getAccessToken()
       }
@@ -40,7 +44,7 @@ function getAccounts() {
     var response = UrlFetchApp.fetch(url, headers);
     var dataSet = JSON.parse(response.getContentText());
     var valuesInner = [];
-    for (var i = 0; i < dataSet.QueryResponse.Account.length; i++) {   
+    for (var i = 0; i < dataSet.QueryResponse.Account.length; i++) {
       var record = dataSet.QueryResponse.Account[i];
       var accountName = record.Name;
       var subAccount = record.SubAccount;
@@ -61,14 +65,14 @@ function getAccounts() {
       var createTime = Utilities.formatDate(new Date(record.MetaData.CreateTime), "UTC", "yyyy-MM-dd HH:mm:ss");
       var lastUpdatedTime = Utilities.formatDate(new Date(record.MetaData.LastUpdatedTime), "UTC", "yyyy-MM-dd HH:mm:ss");
       valuesInner.push([accountName, subAccount, fullyQualifiedName, active, classification, accountType, accountSubType, acctNum, currentBalance, currentBalanceWithSubAccounts, currencyRefValue, currencyRefName, domain, sparse, id, syncToken, createTime, lastUpdatedTime].map(safeValue).join(','));     
-    }    
-    for (var m = 0; m < valuesInner.length; m++) {    
-         values.push(valuesInner[m]);           
-       }    
-    start = start + 100;    
+    }
+    for (var m = 0; m < valuesInner.length; m++) {
+         values.push(valuesInner[m]);
+       }
+    start = start + 100;
     if (dataSet.QueryResponse.Account.length < 100) {
       break; // Stop loop if URL has less than 100 records.
-    }    
-  }  
-  sendToBigQuery(projectID, datasetID, tableID, schema, writeDisposition, values);  
+    }
+  }
+  sendToBigQuery(projectID, datasetID, tableID, schema, writeDisposition, values);
 }
