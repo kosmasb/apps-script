@@ -1,7 +1,7 @@
 // Allows BigQuery Data Transfers to automatically run on specific interval.
 // BigQuery UI allows execution once per day, while this script might be triggered on per minute basis
 function dataTransfer() {
-  var url = ""; // Enter data transfer job url
+  var url = "https://bigquerydatatransfer.googleapis.com/v1/[resource_name]:startManualRuns"; // Enter data transfer resource name
   var accessToken = oauthSignIn();
   var startTime = Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd'T'HH:mm:ss'Z'"); // eg 2021-01-01T00:00:00Z
   var data =
